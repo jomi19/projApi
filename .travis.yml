@@ -12,8 +12,8 @@ git:
     submodules: false
 
 before_script:
-    - sleep 15
     - npm install
+    - sleep 15
 
 script:
     - npm test
