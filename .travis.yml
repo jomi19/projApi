@@ -4,6 +4,12 @@ language: node_js
 before_script:
   - sleep 15
 
+script:
+  - istanbul cover _mocha
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+
+
 node_js:
     - "node"
     - "11"
