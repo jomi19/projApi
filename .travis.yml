@@ -5,9 +5,8 @@ before_script:
   - sleep 15
 
 script:
-  - istanbul cover _mocha
-after_success:
-- bash <(curl -s https://codecov.io/bash)
+  - npm run test
+  - npm run report-coverage
 
 
 node_js:
