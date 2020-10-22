@@ -9,7 +9,8 @@
     "posttest": "bash test/cleartest.bash & npm run eslint",
     "pretest": "bash test/cleartest.bash & bash test/beforetest.bash",
     "eslint": "eslint .",
-    "fix": "eslint --fix ."
+    "fix": "eslint --fix .",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "author": "",
   "license": "ISC",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
+    "coveralls": "^3.1.0",
     "eslint": "^7.11.0",
     "javascript-style-guide": "^1.0.1",
     "mocha": "^8.1.3",
