@@ -1,4 +1,6 @@
 build:
+  environment:
+      mongodb: true
   nodes:
     coverage:
       tests:
