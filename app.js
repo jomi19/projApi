@@ -5,15 +5,13 @@ const ioServer = require("http").createServer(app);
 const bodyParser = require("body-parser");
 const io = require("socket.io")(ioServer);
 const cors = require("cors");
-const stock = require("./stock.js");
 const port = config.PORT;
 const users = require("./routes/users.js");
 const dsn = require("./config/database.js");
 const trade = require("./routes/trade.js");
 const mongo = require("mongodb").MongoClient;
-let stocks = stock.stocks;
-let stockArray = stocks;
-let client, db, stockDb
+let stockArray= []
+let client, db, stockDb;
 
 async function startUp() {
     client = await mongo.connect(dsn, {
@@ -39,7 +37,7 @@ app.use((req, res, next) => {
 
 io.on("connection", function(socket) {
     socket.on("message", function(data) {
-        console.log(data)
+        console.log(data);
         io.emit("message", {
             message: data.message
         });
@@ -55,31 +53,16 @@ app.get("/", (req, res) => {
     res.status(200).json(data);
 });
 
-app.get("/test", async (req, res) => {
-    (req, res, next) => auth.checkToken(req, res, next),
-    (req, res) => user.byStock(res, req)
-    
-
-    
-
-    // hejsan = await test.find().toArray()
-    // await client.close();
-
-    
-    // return res.status(202).json(hejsan)
-})
-
-
 setInterval(async function() {
-    stockArray = await stockDb.find({}).toArray()
+    stockArray = await stockDb.find({}).toArray();
     stockArray.map((activeStock) => {
-        if(!activeStock.price) {
+        if (!activeStock.price) {
             activeStock.price = stock.getStockPrice(activeStock, activeStock.startingPoint);
         } else {
             activeStock.price = stock.getStockPrice(activeStock, activeStock.price);
         }
-        stockDb.updateOne({name: activeStock.name}, {$set: 
-            {price: activeStock.price}},)
+        stockDb.updateOne({name: activeStock.name}, {$set:
+            {price: activeStock.price}},);
     });
 
     io.emit("stocks", stockArray);
@@ -88,7 +71,7 @@ setInterval(async function() {
 
 app.use("/user", users);
 
-app.use("/trade", trade)
+app.use("/trade", trade);
 
 
 app.use((req, res, next) => {

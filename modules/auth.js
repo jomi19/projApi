@@ -75,8 +75,6 @@ const auth = {
         const db = await client.db();
         const users = await db.collection("users");
 
-        console.log(body)
-
         if (!loginId || !password) {
             return errors.error(res, 401, "/login", "Email or password missing");
         }
@@ -99,10 +97,8 @@ const auth = {
 
                 if (result) {
                     const token = jwt.sign(jwtpayload, secret, {expiresIn: "1h"});
-                    let payload = { token: token, email: user.email, userName: 
+                    let payload = { token: token, email: user.email, userName:
                         user.userName, currency: user.currency, depot: user.depot};
-
-                    console.log(result);
 
                     return res.json({
                         type: "succes",
@@ -118,12 +114,19 @@ const auth = {
 
     checkToken: function(req, res, next) {
         const token = req.headers['x-access-token'];
-        jwt.verify(token, secret, function(err) {
-            if (err) {
-                return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Unauthorized");
-            }
+        if (process.env.NODE_ENV === 'test') {
+            console.log("test")
             next();
-        });
+        } else {
+            jwt.verify(token, secret, function(err) {
+                if (err) {
+                    return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Unauthorized token");
+                }
+                next();
+            });
+        }
+        
+
     }
 };
 

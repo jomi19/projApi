@@ -13,15 +13,6 @@ chai.use(chaiHttp);
 describe('Socket Server', () => {
     var client = io("http://localhost:1338/");
 
-    describe('Stock Server', () => {
-        it('Reciving stock data', (done) => {
-            console.log("test")
-            client.on("stocks", function(data) {
-                
-                done();
-            });
-        });
-
         describe("Chat server", () => {
             it("Sending message", (done) => {
                 client.emit("message", {
@@ -34,6 +25,16 @@ describe('Socket Server', () => {
                 });
             });
         });
+
+        describe('Stock Server', () => {
+            it('Reciving stock data', (done) => {
+                console.log("test");
+                client.on("stocks", function(data) {
+                    client.close();
+                    done();
+                });
+            });
+        
     });
 });
 

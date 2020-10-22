@@ -6,8 +6,8 @@
   "scripts": {
     "start": "nodemon app.js",
     "test": "nyc --reporter=html --reporter=text --reporter=clover mocha --timeout 10000 --exit",
-    "posttest": "bash test/cleartest.bash & npm run eslint",
-    "pretest": "bash test/cleartest.bash",
+    "skavaraposttest": "bash test/cleartest.bash & npm run eslint",
+    "pretest": "bash test/cleartest.bash & bash test/beforetest.bash",
     "eslint": "eslint .",
     "fix": "eslint --fix ."
   },

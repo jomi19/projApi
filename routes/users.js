@@ -8,23 +8,17 @@ router.post("/register", function(req, res) {
 });
 
 router.post("/login", function(req, res) {
-    console.log(req.body)
     auth.login(res, req.body);
 });
 
-router.get("/", 
+router.get("/",
     (req, res, next) => auth.checkToken(req, res, next),
     (req, res) => user.getUser(res, req)
-)
+);
 
-router.post("/insert", 
+router.post("/insert",
     (req, res, next) => auth.checkToken(req, res, next),
     (req, res) => user.insert(res, req)
-)
-
-router.post("/test",
-    (req, res, next) => auth.checkToken(req, res, next),
-    (req, res) => user.byStock(res, req)
-)
+);
 
 module.exports = router;
