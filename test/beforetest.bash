@@ -1,3 +1,5 @@
+mongo use testtrading
+
 mongo testtrading --eval 'db.users.insertOne({
     email: "joakim@mail.se",
     userName: "Testkonto",
