@@ -3,24 +3,25 @@
 const dsn = require("../config/database.js");
 const mongo = require("mongodb").MongoClient;
 const errors = require("./errors");
-const auth = require("./auth.js");
 
 const user = {
     getUser: async function(res, req) {
         const userName = req.body.userName;
         const email = req.body.email;
+        const url = req.baseUrl;
+        const path = req.path;
         const client = await mongo.connect(dsn, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
         const db = await client.db();
         const users = await db.collection("users");
-        
+
         if (!userName || !email) {
-            return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Unauthorized, need to login first");
+            return errors.error(res, 401, `${url}${path}`, "Unauthorized, need to login first");
         }
         console.log(userName);
-        console.log(email)
+        console.log(email);
         users.findOne(
             {email: email, userName: userName},
             async function(err, user) {
@@ -29,7 +30,7 @@ const user = {
                     return errors.error(res, 500, "/login", "Database error", err.message);
                 }
                 if (user === null) {
-                    return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Unauthorized no account");
+                    return errors.error(res, 401, `${url}${path}`, "Unauthorized no account");
                 }
 
                 return res.status(201).json({
@@ -45,6 +46,8 @@ const user = {
     insert: async function(res, req) {
         const userName = req.body.userName;
         const email = req.body.email;
+        const url = req.baseUrl;
+        const path = req.path;
         let amount = req.body.amount;
         // const operator = req.body.operator
         const client = await mongo.connect(dsn, {
@@ -55,13 +58,13 @@ const user = {
         const users = await db.collection("users");
 
         if (!parseFloat(amount)) {
-            return errors.error(res, 400, `${req.baseUrl}${req.path}`, "Amount needs to be an int or float");
+            return errors.error(res, 400, `${url}${path}`, "Amount needs to be an int or float");
         }
         amount = parseFloat(amount);
 
         if (!userName || !email) {
             console.log("inget email eller användar");
-            return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Unauthorized, need to login first");
+            return errors.error(res, 401, `${url}${path}`, "Unauthorized, need to login first");
         }
 
         users.findOne(
@@ -73,17 +76,19 @@ const user = {
                 }
                 if (user === null) {
                     await client.close();
-                    return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Unauthorized");
+                    return errors.error(res, 401, `${url}${path}`, "Unauthorized");
                 }
                 let currency = user.currency || 0;
                 let newCurrency = currency + amount;
 
                 await users.updateOne({email: email, userName: userName}, { $set:
                     {currency: newCurrency}
-                }, async function(err, result) {
+                }, async function(err) {
                     await client.close();
                     if (err) {
-                        return errors.error(res, 500, `${req.baseUrl}${req.path}`, "Database error", err.message);
+                        let message = err.message;
+
+                        return errors.error(res, 500, `${url}${path}`, "Database error", message);
                     }
                     console.log(req.body);
                     return res.status(200).json({
@@ -106,6 +111,8 @@ const user = {
         });
         const db = await client.db();
         const users = await db.collection("users");
+        const url = req.baseUrl;
+        const path = req.path;
         let amount = req.body.amount;
         let stockPrice = req.body.stockPrice;
         let totalPrice = 0;
@@ -114,10 +121,10 @@ const user = {
         const stockName = req.body.stockName;
 
         if (!userName || !email) {
-            return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Unauthorized, no username/email");
+            return errors.error(res, 401, `${url}${path}`, "Unauthorized, no username/email");
         }
         if (!parseInt(amount) || !parseFloat(stockPrice)) {
-            return errors.error(res, 400, `${req.baseUrl}${req.path}`, "Amount needs to be an int or float");
+            return errors.error(res, 400, `${url}${path}`, "Amount needs to be an int or float");
         }
 
         amount = parseInt(amount);
@@ -125,17 +132,16 @@ const user = {
         totalPrice = stockPrice * amount;
         await users.findOne({email: email, userName: userName}, async function(err, result) {
             if (err) {
-                return errors.error(res, 500, `${req.baseUrl}${req.path}`, "Database error", err.message);
+                return errors.error(res, 500, `${url}${path}`, "Database error", err.message);
             }
 
-            if(result === null) {
-                return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Cant find user");
+            if (result === null) {
+                return errors.error(res, 401, `${url}${path}`, "Cant find user");
             }
             if (!result.currency || totalPrice > result.currency) {
-                if(!sell) {
-                    return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Not enough currency");
+                if (!sell) {
+                    return errors.error(res, 401, `${url}${path}`, "Not enough currency");
                 }
-                
             }
 
             if (sell) {
@@ -146,26 +152,26 @@ const user = {
 
             depot = result.depot || [];
 
-            let stockIndex = depot.findIndex(function(stock, index) {
+            let i = depot.findIndex(function(stock) {
                 if (stock.title ===  stockName) {
                     return true;
                 }
             });
 
 
-            if (stockIndex < 0) {
+            if (i < 0) {
                 if (sell) {
-                    return errors.error(res, 401, `${req.baseUrl}${req.path}`, "No of that stock in depot");
+                    return errors.error(res, 401, `${url}${path}`, "No of that stock in depot");
                 }
 
                 depot.push({title: stockName, amount: amount});
-            } else if (depot[stockIndex].amount < amount && sell) {
-                return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Not enough stocks to sell");
+            } else if (depot[i].amount < amount && sell) {
+                return errors.error(res, 401, `${url}${path}`, "Not enough stocks to sell");
             } else {
                 if (sell) {
-                    depot[stockIndex] = {title: stockName, amount: depot[stockIndex].amount - amount};
+                    depot[i] = {title: stockName, amount: depot[i].amount - amount};
                 } else {
-                    depot[stockIndex] = {title: stockName, amount: depot[stockIndex].amount + amount};
+                    depot[i] = {title: stockName, amount: depot[i].amount + amount};
                 }
             }
 
@@ -174,10 +180,11 @@ const user = {
             users.updateOne({email: email, userName: userName}, {$set: {
                 depot: depot,
                 currency: newCurrency
-            }}, async function(err, newRes) {
+            }}, async function(err) {
                 await client.close();
                 if (err) {
-                    return await errors.error(res, 500, `${req.baseUrl}${req.path}`, "Database error", err.message);
+                    return await errors.error(res, 500, `${req.baseUrl}${req.path}`,
+                        "Database error", err.message);
                 }
                 console.log("Hej");
                 return res.status(201).json({currency: newCurrency, depot: depot});

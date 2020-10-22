@@ -10,7 +10,8 @@ const users = require("./routes/users.js");
 const dsn = require("./config/database.js");
 const trade = require("./routes/trade.js");
 const mongo = require("mongodb").MongoClient;
-let stockArray= []
+const stock = require("./stock.js");
+let stockArray= [];
 let client, db, stockDb;
 
 async function startUp() {

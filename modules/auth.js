@@ -114,19 +114,20 @@ const auth = {
 
     checkToken: function(req, res, next) {
         const token = req.headers['x-access-token'];
+        const url = req.baseUrl;
+        const path = req.path;
+
         if (process.env.NODE_ENV === 'test') {
-            console.log("test")
+            console.log("test");
             next();
         } else {
             jwt.verify(token, secret, function(err) {
                 if (err) {
-                    return errors.error(res, 401, `${req.baseUrl}${req.path}`, "Unauthorized token");
+                    return errors.error(res, 401, `${url}${path}`, "Unauthorized token");
                 }
                 next();
             });
         }
-        
-
     }
 };
 
