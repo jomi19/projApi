@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon app.js",
-    "test": "nyc --reporter=html --reporter=text --reporter=clover mocha --timeout 10000 --exit",
+    "test": "nyc mocha --timeout 10000 --exit",
+    "report-coverage": "nyc report --reporter=text-lcov >                coverage.lcov && codecov",
     "posttest": "bash test/cleartest.bash & npm run eslint",
     "pretest": "bash test/cleartest.bash & bash test/beforetest.bash",
     "eslint": "eslint .",
