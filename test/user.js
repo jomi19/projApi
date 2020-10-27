@@ -82,8 +82,9 @@ describe("User functions", () => {
                     })
                     .end((err, res) => {
                         if (test.status === 200) {
-                            res.body.currency.should.equal(100 + test.amount);
+                            res.body.currency.should.equal(500 + test.amount);
                         }
+
                         res.should.have.status(test.status);
                         done();
                     });
@@ -94,47 +95,47 @@ describe("User functions", () => {
     const tradeTests = [
         // Succesfull by
         {email: "joakim@mail.se", userName: "Testkonto",
-            amount: 2, stockPrice: 5, stockName: "Testing stock",
+            amount: 2,  stockId: 1,
             status: 201, testCase: "Bying 2 test stocks",
             message: "", action: "/by", },
-        // Bying more off same st ock
+        // Bying more off same stock
         {email: "joakim@mail.se", userName: "Testkonto",
-            amount: 2, stockPrice: 5, stockName: "Testing stock",
+            amount: 2, stockId: 1,
             status: 201, testCase: "Bying more of same stock",
             message: "", action: "/by", },
         // Bying for more then you have
         {email: "joakim@mail.se", userName: "Testkonto",
-            amount: 1000, stockPrice: 1000, stockName: "Testing stock",
+            amount: 10000, stockId: 1,
             status: 401, testCase: "Bying for more then i have",
             message: "", action: "/by", },
         //Succesfull sell
         {email: "joakim@mail.se", userName: "Testkonto",
-            amount: 2, stockPrice: 5, stockName: "Testing stock",
+            amount: 2, stockId: 1,
             status: 201, testCase: "Selling 2 test stocks",
             message: "", action: "/sell", },
         //Selling more stock then in depot
         {email: "joakim@mail.se", userName: "Testkonto",
-            amount: 100, stockPrice: 1, stockName: "Testing stock",
+            amount: 10000, stockId: 1,
             status: 401, testCase: "Selling more stocks then you have",
             message: "", action: "/sell", },
         //Selling a stock that dont exists in depot
         {email: "joakim@mail.se", userName: "Testkonto",
-            amount: 1, stockPrice: 5, stockName: "do not exist",
+            amount: 1, stockId: 2,
             status: 401, testCase: "Selling more stocks then you have",
             message: "No of that stock in depot", action: "/sell", },
         //No email
         {email: "", userName: "Testkonto", amount: 2,
-            stockPrice: 5, stockName: "Testing stock",
+            stockId: "Testing stock",
             status: 401, testCase: "Loging in with no email",
             message: "Unauthorized, no username/email", action: "/by", },
         // String insted off int on stockprice or amount (same error)
         {email: "joakim@mail.se", userName: "Testkonto",
-            amount: "två", stockPrice: 5, stockName: "Testing stock",
+            amount: "två", stockId: "Testing stock",
             status: 400, testCase: "String insted off int/float",
             message: "Amount needs to be an int or float", action: "/by", },
-        // String insted off int on stockprice or amount (same error)
-        {email: "dontexist@mail.se", userName: "Testkonto",
-            amount: 2, stockPrice: 5, stockName: "Testing stock",
+        // Email that dont exist
+        {email: "dosadntexist@mail.se", userName: "Testkonto",
+            amount: 1, stockId: 1,
             status: 401, testCase: "Cant find user",
             message: "Cant find user", action: "/by", },
     ];
@@ -149,8 +150,7 @@ describe("User functions", () => {
                         email: test.email,
                         userName: test.userName,
                         amount: test.amount,
-                        stockPrice: test.stockPrice,
-                        stockName: test.stockName
+                        stockId: test.stockId
                     })
                     .end((err, res) => {
                         if (test.status === 201) {

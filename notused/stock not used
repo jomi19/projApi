@@ -5,6 +5,16 @@ const mongo = require("mongodb").MongoClient;
 const errors = require("./errors");
 const auth = require("./auth.js");
 
+const getNextId = function() {
+    var sequenceDocument = db.counters.findAndModify({
+        query:{_id: sequenceName },
+        update: {$inc:{sequence_value:1}},
+        new:true
+        });
+        return sequenceDocument.sequence_value;
+}
+
+
 const user = {
     getUser: async function(res, req) {
         const userName = req.body.userName;
@@ -78,8 +88,6 @@ const user = {
                 }
                 let currency = user.currency || 0;
                 let newCurrency = currency + amount;
-
-                console.log(newCurrency);
                 await users.updateOne({email: email, userName: userName}, { $set:
                     {currency: newCurrency}
                 }, async function(err, res) {

@@ -60,7 +60,6 @@ const user = {
         if (!parseFloat(amount)) {
             return errors.error(res, 400, `${url}${path}`, "Amount needs to be an int or float");
         }
-        amount = parseFloat(amount);
 
         if (!userName || !email) {
             console.log("inget email eller användar");
@@ -70,6 +69,7 @@ const user = {
         users.findOne(
             {email: email, userName: userName},
             async function(err, user) {
+                amount = parseFloat(amount);
                 if (err) {
                     await client.close();
                     return errors.error(res, 500, "/login", "Database error", err.message);
@@ -81,6 +81,7 @@ const user = {
                 let currency = user.currency || 0;
                 let newCurrency = currency + amount;
 
+
                 await users.updateOne({email: email, userName: userName}, { $set:
                     {currency: newCurrency}
                 }, async function(err) {
@@ -90,7 +91,7 @@ const user = {
 
                         return errors.error(res, 500, `${url}${path}`, "Database error", message);
                     }
-                    console.log(req.body);
+
                     return res.status(200).json({
                         currency: newCurrency
                     });
@@ -111,83 +112,101 @@ const user = {
         });
         const db = await client.db();
         const users = await db.collection("users");
+        const stockDb = await db.collection("stocks");
         const url = req.baseUrl;
         const path = req.path;
         let amount = req.body.amount;
-        let stockPrice = req.body.stockPrice;
+        let stockPrice = false;
         let totalPrice = 0;
         let newCurrency = 0;
         let depot = {};
-        const stockName = req.body.stockName;
+        let id = parseInt(req.body.stockId);
+        let stockName = "";
 
         if (!userName || !email) {
+            console.log("fel email");
             return errors.error(res, 401, `${url}${path}`, "Unauthorized, no username/email");
         }
-        if (!parseInt(amount) || !parseFloat(stockPrice)) {
+        if (!parseInt(amount)) {
             return errors.error(res, 400, `${url}${path}`, "Amount needs to be an int or float");
         }
 
-        amount = parseInt(amount);
-        stockPrice = parseFloat(stockPrice);
-        totalPrice = stockPrice * amount;
-        await users.findOne({email: email, userName: userName}, async function(err, result) {
+        await stockDb.findOne({_id: id}, async function(err, stockSearch) {
             if (err) {
                 return errors.error(res, 500, `${url}${path}`, "Database error", err.message);
             }
-
-            if (result === null) {
-                return errors.error(res, 401, `${url}${path}`, "Cant find user");
+            if (stockSearch === null) {
+                console.log("cant find stock");
+                return errors.error(res, 401, `${url}${path}`, "Cant find stock");
             }
-            if (!result.currency || totalPrice > result.currency) {
-                if (!sell) {
-                    return errors.error(res, 401, `${url}${path}`, "Not enough currency");
-                }
-            }
-
-            if (sell) {
-                newCurrency = result.currency + totalPrice;
-            } else {
-                newCurrency = result.currency - totalPrice;
-            }
-
-            depot = result.depot || [];
-
-            let i = depot.findIndex(function(stock) {
-                if (stock.title ===  stockName) {
-                    return true;
-                }
-            });
-
-
-            if (i < 0) {
-                if (sell) {
-                    return errors.error(res, 401, `${url}${path}`, "No of that stock in depot");
-                }
-
-                depot.push({title: stockName, amount: amount});
-            } else if (depot[i].amount < amount && sell) {
-                return errors.error(res, 401, `${url}${path}`, "Not enough stocks to sell");
-            } else {
-                if (sell) {
-                    depot[i] = {title: stockName, amount: depot[i].amount - amount};
-                } else {
-                    depot[i] = {title: stockName, amount: depot[i].amount + amount};
-                }
-            }
-
-
-
-            users.updateOne({email: email, userName: userName}, {$set: {
-                depot: depot,
-                currency: newCurrency
-            }}, async function(err) {
-                await client.close();
+            stockPrice = stockSearch.price;
+            stockName = stockSearch.name;
+            totalPrice = stockPrice * amount;
+            console.log(`stockprice: ${stockPrice}, name: ${stockName}`);
+            console.log(totalPrice);
+            await users.findOne({email: email, userName: userName}, async function(err, result) {
                 if (err) {
-                    return await errors.error(res, 500, `${req.baseUrl}${req.path}`,
-                        "Database error", err.message);
+                    return errors.error(res, 500, `${url}${path}`, "Database error", err.message);
                 }
-                console.log("Hej");
-                return res.status(201).json({currency: newCurrency, depot: depot});
+
+                if (result === null) {
+                    console.log("cant find user");
+                    return errors.error(res, 401, `${url}${path}`, "Cant find user");
+                }
+                if (!result.currency || totalPrice > result.currency) {
+                    if (!sell) {
+                        console.log("cant sell");
+                        console.log(result);
+                        console.log(totalPrice);
+                        return errors.error(res, 401, `${url}${path}`, "Not enough currency");
+                    }
+                }
+
+                if (sell) {
+                    newCurrency = result.currency + totalPrice;
+                } else {
+                    newCurrency = result.currency - totalPrice;
+                }
+
+                depot = result.depot || [];
+
+                let i = depot.findIndex(function(stock) {
+                    if (stock.title ===  stockName) {
+                        return true;
+                    }
+                });
+
+
+                if (i < 0) {
+                    if (sell) {
+                        return errors.error(res, 401, `${url}${path}`, "No of that stock in depot");
+                    }
+
+                    depot.push({title: stockName, amount: amount, id: id});
+                } else if (depot[i].amount < amount && sell) {
+                    console.log("not taht many to sell");
+                    return errors.error(res, 401, `${url}${path}`, "Not enough stocks to sell");
+                } else {
+                    if (sell) {
+                        depot[i] = {title: stockName, amount: depot[i].amount - amount, id: id};
+                    } else {
+                        depot[i] = {title: stockName, amount: depot[i].amount + amount, id: id};
+                    }
+                }
+
+                users.updateOne({email: email, userName: userName}, {$set: {
+                    depot: depot,
+                    currency: newCurrency
+                }}, async function(err) {
+                    console.log("Uptaderar user");
+                    await client.close();
+                    if (err) {
+                        return await errors.error(res, 500, `${req.baseUrl}${req.path}`,
+                            "Database error", err.message);
+                    }
+                    console.log("Hej");
+                    return res.status(201).json({currency: newCurrency, depot: depot});
+                });
             });
         });
     }

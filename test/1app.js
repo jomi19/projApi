@@ -29,7 +29,8 @@ describe('Socket Server', () => {
     describe('Stock Server', () => {
         it('Reciving stock data', (done) => {
             console.log("test");
-            client.on("stocks", function() {
+            client.on("stocks", function(data) {
+                console.log(data);
                 client.close();
                 done();
             });
