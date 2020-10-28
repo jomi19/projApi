@@ -12,6 +12,10 @@ var stock = {
             return 20
         }
 
+        if (newPrice > 200) {
+            return 100
+        }
+
         return newPrice
     },
 };
