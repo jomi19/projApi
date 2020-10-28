@@ -7,16 +7,16 @@ var stock = {
         let rate = input.rate;
         let variance = input.variance;
         let newPrice = price * rate + variance * stock.randomAroundZero();
-        
+
         if (newPrice  < 5) {
-            return 20
+            return 20;
         }
 
         if (newPrice > 200) {
-            return 100
+            return 100;
         }
 
-        return newPrice
+        return newPrice;
     },
 };
 
