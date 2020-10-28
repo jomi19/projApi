@@ -28,7 +28,10 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-io.origins(['https://trade.joakimm.me:443']);
+if (process.env.NODE_ENV != "test") {
+    io.origins(['https://trade.joakimm.me:443']);
+}
+
 
 app.use((req, res, next) => {
     console.log(req.method);
